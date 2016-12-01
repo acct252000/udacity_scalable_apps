@@ -93,9 +93,29 @@ class CrazyEightsApi(remote.Service):
     def play_card(self, request):
         """Makes a move. Returns a game state with message"""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        valid_card = False
         if game.game_over:
             return game.to_form('Game already over!')
-        top_card = game.discard_pile.split(',')[0]
+        # determine number of top card in discard pile
+        top_card_number = DECKOFCARDS[int(game.discard_pile.split(',')[0])][1]
+        # check if played card crazy eight
+        if request.card_number == 8:
+            if request.crazy_suit:
+                game.current_suit = request.crazy_suit
+            else:
+                game.current_suit = request.card_suit
+            valid_card = True
+        # check if top card crazy eight
+        elif top_card_number == 8:
+            if game.current_suit == request.card_suit:
+                valid_card = True
+        elif top_card_number == request.card_number or game.current_suit == request.card_suit
+            game.current_suit = request.current_suit
+            valid_card = True
+        if valid_card:
+              game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
+
+            
         #to insert in top of list
         #list.insert(0,string)
 
