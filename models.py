@@ -36,14 +36,12 @@ class Game(ndb.Model):
     user_one = ndb.KeyProperty(required=True, kind='User')
     user_two = ndb.KeyProperty(required=True, kind='User')
     user_one_turn = ndb.BooleanProperty(required=True)
-    versus_computer = ndb.BooleanProperty(required=True)
 
     @classmethod
-    def new_game(cls, versus_computer, user_one, user_two):
-        """Creates and returns a new game"""
-	cards = range(0,52)
-    cards = map(str,cards)
-	random.shuffle(cards)
+    def new_game(cls, user_one, user_two):
+        cards = range(0,52)
+        cards = map(str,cards)
+        random.shuffle(cards)
         game = Game(user_one=user_one,
                     user_two=user_two,
                     player_one_hand = ','.join(cards[0:7]),
@@ -52,7 +50,6 @@ class Game(ndb.Model):
                     current_suit = DECKOFCARDS[int(cards[14])][0],
                     undrawn_cards = ','.join(cards[15:]),
                     user_one_turn = bool(random.getrandbits(1)),
-                    versus_computer = versus_computer,
                     game_over=False)
         game.put()
         return game
@@ -65,13 +62,30 @@ class Game(ndb.Model):
         card_values = []
         for card_number in card_list:
             card = DECKOFCARDS[card_number]
-            card_values.append(card)
-        return card_values
+            card_string = '(' + card[0] + ',' + card[1] + ')'
+            card_values.append(card_string)
+            card_values_string = ','.join(card_values)
+        return card_values_string
 
-    def discard_card(cls,user_one_turn, play_card_number, play_card_suit):
+    def card_in_hand(self, card_number, card_suit):
+        card_in_question = (card_suit,card_number)
+        card_in_question_number = str(DECKOFCARDS.index(card_in_question))
+        if self.user_one_turn:
+            cards_held_list = self.player_one_hand.split(',')
+        else:
+            cards_held_list = self.player_two_hand.split(',')
+        if card_in_question_number in cards_held_list:
+            return True
+        else:
+            return False
+
+    def discard_card(self,user_one_turn, play_card_number, play_card_suit):
         #update discard pile
-        discarded_card = (play_card_number,str(play_card_suit))
-        discarded_card_number = DECKOFCARDS.index(card)
+        discarded_card = (play_card_suit,play_card_number)
+        discarded_card_number = DECKOFCARDS.index(discarded_card)
+        #update current suit
+        self.current_suit = play_card_suit
+        #add card to discarded pile
         discarded_pile_list = self.discard_pile.split(',')
         discarded_pile_list.insert(0,str(discarded_card_number))
         self.discard_pile = ','.join(discarded_pile_list)
@@ -86,14 +100,18 @@ class Game(ndb.Model):
             player_hand_list.remove(str(discarded_card_number))
             self.player_two_hand = ','.join(player_hand_list)
             self.user_one_turn = True
+        self.put()
 
-    def draw_card(cls,user_one_turn):
+    def draw_card(self,user_one_turn):
+
         # return string number of top undrawn card
         undrawn_card_list = self.undrawn_cards.split(',')
+        # set reshuffle to true if drawing last card
+        reshuffle = False
+        if len(undrawn_card_list) == 1:
+            reshuffle = True
         drawn_card = undrawn_card_list.pop(0)
-        self.undrawn_cards = ','.join(undrawn_card_list)
-
-        if user_one_turn:
+        if user_one_turn == True:
             player_hand_list = self.player_one_hand.split(',')
             player_hand_list.append(drawn_card)
             self.player_one_hand = ','.join(player_hand_list)
@@ -101,28 +119,34 @@ class Game(ndb.Model):
             player_hand_list = self.player_two_hand.split(',')
             player_hand_list.append(drawn_card)
             self.player_two_hand = ','.join(player_hand_list)
+        if reshuffle == True:
+            discard_pile_list = self.discard_pile.split(',')
+            last_discard_card = discarded_pile_list.pop(0)
+            random.shuffle(discarded_pile_list)
+            self.undrawn_cards = ','.join(discarded_pile_list)
+            self.discard_pile = last_discard_card
+        else:
+            self.undrawn_cards = ','.join(undrawn_card_list)
+        self.put()
 
-    def to_form(self, message):
+    def to_form(self, form_message):
         """Returns a GameForm representation of the Game"""
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
         form.user_one_name = self.user_one.get().name
         form.user_two_name = self.user_two.get().name
         form.player_one_hand = self.to_card_type(self.player_one_hand)
-	    form.player_two_hand = self.to_card_type(self.player_two_hand)
+        form.player_two_hand = self.to_card_type(self.player_two_hand)
         form.discard_pile = self.to_card_type(self.discard_pile)
         form.current_suit = self.current_suit
         form.undrawn_cards = self.to_card_type(self.undrawn_cards)
         form.user_one_turn = self.user_one_turn
-        form.versus_computer = self.versus_computer
         form.game_over = self.game_over
-        form.message = message
+        form.message = form_message
         return form
 
-    def end_game(self, won=False, winning_user):
-        """Ends the game - if won is True, the player won. - if won is False,
-        the player lost."""
-	if self.user_one.get().name == winning_user:
+    def end_game(self, user_one_turn):
+        if user_one_turn:
             score = Score(winning_user=self.user_one, losing_user = self.user_two, date=date.today())
         else:
             score = Score(winning_user=self.user_two, losing_user = self.user_one, date=date.today())    
@@ -154,21 +178,23 @@ class GameForm(messages.Message):
     current_suit = messages.StringField(7,required=True)
     undrawn_cards = messages.StringField(8, required=True)
     user_one_turn = messages.BooleanField(9, required=True)
-    versus_computer = messages.BooleanField(10, required=True)
-    game_over = messages.BooleanField(11, required=True)
+    game_over = messages.BooleanField(10, required=True)
+    message = messages.StringField(11)
  
 class NewGameForm(messages.Message):
     """Used to create a new game"""
-    versus_computer = messages.BooleanField(1, required=True)
-    user_one_name = messages.StringField(2, required=True)
-    user_two_name = messages.StringField(3)
+    user_one_name = messages.StringField(1, required=True)
+    user_two_name = messages.StringField(2, required=True)
 
 class PlayCardForm(messages.Message):
     """Used to make a move in an existing game"""
-    play_card = messages.BooleanField(1, required=True)
-    card_number = messages.IntegerField(2, required=True)
-    card_suit = messages.StringField(3, required=True)
-    crazy_suit = messages.StringField(4)
+    card_number = messages.StringField(1, required=True)
+    card_suit = messages.StringField(2, required=True)
+    crazy_suit = messages.StringField(3)
+
+class DrawCardForm(messages.Message):
+    """Used to make a move in an existing game"""
+    draw_card = messages.BooleanField(1, required=True)
 
 class ScoreForm(messages.Message):
     """ScoreForm for outbound Score information"""
