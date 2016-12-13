@@ -1,0 +1,63 @@
+<div ng-controller="PlayGameCtrl" ng-init="init()">
+<div>
+    <div class="row">
+        <div class="col-lg-12">
+            <h4>Current game is between {{game.user_one_name}} and {{game.user_two_name}}</h4>
+        </div>
+        <div class="row">
+        <section class="col-md-4 col-sm-3 col-xs-3 col-log-5 text-center">
+        </section>
+        <section class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center">
+            <img class = "card" ng-src="/img/{{discard_pile_top_card.img}}" alt="personal avatar">
+        </section>
+        <section class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center">
+        <a href="" ng-click="drawCard()">
+            <img class = "card" src="/img/card_back.png" alt="personal avatar"></a>
+        </section>
+        <section class="col-md-4 col-sm-3 col-xs-3 col-log-5 text-center">
+        </section>
+        </div>
+        <div ng-show = "show_suit" class="col-lg-12">
+            <h4>Current suit is {{game.current_suit}}</h4>
+        </div>
+         <div ng-show = "is_player_turn" class="col-lg-12">
+            <h4>It is your turn</h4>
+        </div>
+         <div ng-hide = "is_player_turn" class="col-lg-12">
+            <h4 ng-show="is_user_one">It is {{game.user_two_name}}'s turn.</h4>
+            <h4 ng-hide="is_user_one">It is {{game.user_one_name}}'s turn.</h4>
+        </div>
+        <div ng-show = "game_over" class="col-lg-12">
+            <h4>{{game.message}}</h4>
+        </div>
+      
+        <div ng-show="eight_played">
+        <form name="crazyForm" novalidate role="form">
+                <div class="form-group">
+                    <label for="crazy_suit">Suit Desired (all lower case, plural):</label>
+                
+                    <input id="crazy_suit" type="text" name="crazy_suit" ng-model="crazy_suit"
+                           class="form-control"/>
+                </div>
+
+               
+
+                <button ng-click="playCrazyEight(crazy_suit)" class="btn btn-primary"
+                        ng-disabled="loading">Play!
+                </button>
+            </form>
+        </div>
+        <div class="row">
+        <section ng-if="is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_one_hand_cards">
+            <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
+        </section>
+         <section ng-if="!is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards">
+            <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
+        </section>
+        
+    </div>
+
+        </div>
+    </div>
+</div>
+

@@ -9,7 +9,7 @@ from google.appengine.ext import ndb
 
 
 CARD_NUMBER_VALUES = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
-CARD_SUITS = ['Hearts', 'Diamonds','Clubs','Spades']
+CARD_SUITS = ['hearts', 'diamonds','clubs','spades']
 
 DECKOFCARDS = []
 
@@ -23,12 +23,7 @@ class User(ndb.Model):
     """User profile"""
     name = ndb.StringProperty(required=True)
     email =ndb.StringProperty()
-
    
-
-
-
-
 class Game(ndb.Model):
     """Game object"""
     player_one_hand = ndb.TextProperty(required=True)
@@ -42,6 +37,7 @@ class Game(ndb.Model):
     user_one_turn = ndb.BooleanProperty(required=True)
     cancelled = ndb.BooleanProperty(required=True)
     move = ndb.StringProperty(repeated=True)
+    date = ndb.DateProperty(required=True)
 
     @classmethod
     def new_game(cls, user_one, user_two):
@@ -57,7 +53,8 @@ class Game(ndb.Model):
                     undrawn_cards = ','.join(cards[15:]),
                     user_one_turn = bool(random.getrandbits(1)),
                     cancelled = False,
-                    game_over = False)
+                    game_over = False,
+                    date=date.today())
         game.put()
         return game
 
@@ -71,8 +68,19 @@ class Game(ndb.Model):
             card = DECKOFCARDS[card_number]
             card_string = '(' + card[0] + ',' + card[1] + ')'
             card_values.append(card_string)
-            card_values_string = ','.join(card_values)
+            card_values_string = '*'.join(card_values)
         return card_values_string
+
+    def to_cards(cls, card_string):
+        card_list = card_string.split(',')
+        card_list = map(int,card_list)
+        card_values = []
+        for card_number in card_list:
+            card = DECKOFCARDS[card_number]
+            card_string = '(' + card[0] + ',' + card[1] + ')'
+            card_values.append(card_string)
+        return card_values
+
 
     def card_in_hand(self, card_number, card_suit):
         card_in_question = (card_suit,card_number)
@@ -157,6 +165,7 @@ class Game(ndb.Model):
         form.user_one_turn = self.user_one_turn
         form.game_over = self.game_over
         form.cancelled = self.cancelled
+        form.date = str(self.date)
         form.message = form_message
         return form
 
@@ -165,6 +174,7 @@ class Game(ndb.Model):
         form.urlsafe_key = self.key.urlsafe()
         form.user_one_name = self.user_one.get().name
         form.user_two_name = self.user_two.get().name
+        form.date = str(self.date)
         form.move = self.move
         return form
 
@@ -200,6 +210,11 @@ class Score(ndb.Model):
                          date=str(self.date))
 
 
+
+class UserForm(messages.Message):
+    user_name = messages.StringField(1,required=True)
+    email = messages.StringField(2,required=True)
+
 class TestForm(messages.Message):
     user_one_name = messages.StringField(1,required=True)
 
@@ -216,14 +231,16 @@ class GameForm(messages.Message):
     user_one_turn = messages.BooleanField(9, required=True)
     game_over = messages.BooleanField(10, required=True)
     cancelled = messages.BooleanField(11, required=True)
-    message = messages.StringField(12)
+    date = messages.StringField(12, required=True)
+    message = messages.StringField(13)
     
-
+    
 class GameHistoryForm(messages.Message):
     urlsafe_key = messages.StringField(1, required=True)
     user_one_name = messages.StringField(2, required=True)
     user_two_name = messages.StringField(3, required = True)
-    move = messages.StringField(4, repeated=True)
+    date = messages.StringField(4, required=True)
+    move = messages.StringField(5, repeated=True)
  
 class NewGameForm(messages.Message):
     """Used to create a new game"""

@@ -50,11 +50,11 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/conference/create')}" ng-click="collapseNavbar()"><a href="#/conference/create" >Games</a></li>
+                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/conference/create')}" ng-click="collapseNavbar()"><a href="#/games" >Games</a></li>
                 <li ng-hide="getSignedInState()">&nbsp;  </li>
-                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/conference/create')}" ng-click="collapseNavbar()"><a href="#/conference/create" >Scores</a></li>
+                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/conference/create')}" ng-click="collapseNavbar()"><a href="#/scores">Scores</a></li>
                 <li ng-hide="getSignedInState()">&nbsp;  </li>
-                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/profile')}" ng-click="collapseNavbar()"><a href="#/user">Me</a></li>
+                <li ng-show="getSignedInState()" ng-class="{ active: isActive('/profile')}" ng-click="collapseNavbar()"><a href="#/profile">My Profile</a></li>
                 <li ng-hide="getSignedInState()">&nbsp;  </li>
                 <li class="nav-divider"></li>
             </ul>

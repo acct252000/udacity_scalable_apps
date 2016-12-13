@@ -13,23 +13,15 @@
         <div class="col-md-8">
             <h3>My Profile</h3>
             <form name="profileForm" novalidate role="form">
-                <div class="form-group" ng-class="{'has-warning': profile.displayName != initialProfile.displayName}">
-                    <label for="displayName">Display Name </label>
+                <div class="form-group" ng-class="{'has-warning': profile.user_name != initialProfile.user_name}">
+                    <label for="user_name">Display Name </label>
                     <span class="label label-warning"
-                          ng-show="profile.displayName != initialProfile.displayName"> Changed</span>
-                    <input id="displayName" type="text" name="displayName" ng-model="profile.displayName"
+                          ng-show="profile.user_name != initialProfile.user_name"> Changed</span>
+                    <input id="user_name" type="text" name="user_name" ng-model="profile.user_name"
                            class="form-control"/>
                 </div>
 
-                <div class="form-group" ng-class="{'has-warning': profile.teeShirtSize != initialProfile.teeShirtSize}">
-                    <label for="teeShirtSize">Tee shirt size</label>
-                    <span class="label label-warning"
-                          ng-show="profile.teeShirtSize != initialProfile.teeShirtSize"> Changed</span>
-                    <select id="teeShirtSize" ng-model="profile.teeShirtSize" name="teeShirtSize" ng-options="
-shirt.size as shirt.text for shirt in teeShirtSizes"
-                            class="form-control">
-                    </select>
-                </div>
+               
 
                 <button ng-click="saveProfile(profileForm)" class="btn btn-primary"
                         ng-disabled="loading">Update profile
@@ -37,4 +29,5 @@ shirt.size as shirt.text for shirt in teeShirtSizes"
             </form>
         </div>
     </div>
+ 
 </div>

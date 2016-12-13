@@ -117,3 +117,7 @@ ul#conferences-list {
     color: black;
     margin-top: 25px;
 }
+
+.card {
+    width: 75px;
+}

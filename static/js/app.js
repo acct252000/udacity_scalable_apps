@@ -16,17 +16,21 @@ var app = angular.module('crazyeightsApp',
     config(['$routeProvider',
         function ($routeProvider) {
             $routeProvider.
-                when('/conference', {
-                    templateUrl: '/partials/show_conferences.html',
-                    controller: 'ShowConferenceCtrl'
+                when('/game/history/:urlsafe_key', {
+                    templateUrl: '/partials/game_history.html',
+                    controller: 'GameHistoryCtrl'
                 }).
-                when('/conference/create', {
-                    templateUrl: '/partials/create_conferences.html',
-                    controller: 'CreateConferenceCtrl'
+                when('/game/:urlsafe_key', {
+                    templateUrl: '/partials/game.html',
+                    controller: 'PlayGameCtrl'
                 }).
-                when('/conference/detail/:websafeConferenceKey', {
-                    templateUrl: '/partials/conference_detail.html',
-                    controller: 'ConferenceDetailCtrl'
+                when('/scores', {
+                    templateUrl: '/partials/scores.html',
+                    controller: 'ScoreCtrl'
+                }).
+                when('/games', {
+                    templateUrl: '/partials/games.html',
+                    controller: 'GamesCtrl'
                 }).
                 when('/profile', {
                     templateUrl: '/partials/profile.html',
@@ -75,7 +79,27 @@ app.constant('HTTP_ERRORS', {
     'UNAUTHORIZED': 401
 });
 
+app.factory('current_user_name', function ($modal){
+    var current_user_name = {
+            name: ''
+        }
+        
 
+    current_user_name.update = function(){
+    gapi.client.crazyeights.getProfile().
+                    execute(function (resp) {
+                            if (resp.error) {
+                                // Failed to get a user profile.
+                            } else {
+                                // Succeeded to get the user profile.
+                                current_user_name.name = resp.result.user_name;
+                            }
+                        });
+                    }
+               
+   
+    return current_user_name;
+});
 /**
  * @ngdoc service
  * @name oauth2Provider
@@ -88,7 +112,8 @@ app.factory('oauth2Provider', function ($modal) {
     var oauth2Provider = {
         CLIENT_ID: '91242573256-uv9bn5fgnu3fegagbehuji4br5ut5ckf.apps.googleusercontent.com',
         SCOPES: 'email profile',
-        signedIn: false
+        signedIn: false,
+        email: 'test@test.com'
     }
 
     /**

@@ -1,0 +1,62 @@
+<div ng-controller="ScoreCtrl" ng-init="init()">
+    <div class="row">
+        <div class="col-lg-12">
+            <div id="messages" class="alert alert-{{alertStatus}}" ng-show="messages">
+                <span ng-bind="messages"></span>
+                <i class="dismiss-messages pull-right glyphicon glyphicon-remove" ng-click="messages = ''"
+                   ng-show="messages"></i>
+            </div>
+            <img class="spinner" src="/img/ajax-loader.gif" ng-show="loading"/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <h3>My Scores</h3>
+        </div>
+        <div class="col-md-8">
+        <table class="table">
+        <tr><th>Winning Player</th><th>Losing Player</th><th>Date</th></tr>
+        <tr ng-repeat="score in user_scores">
+                        
+                        <td>{{score.winning_user_name}}</td>
+                        <td>{{score.losing_user_name}}</td>
+                        <td>{{score.date}}</td>
+                    </tr>
+        </table>
+        </div>
+    </div>
+     <div class="row">
+        <div class="col-md-8">
+            <h3>All Scores</h3>
+        </div>
+        <div class="col-md-8">
+        <table class="table">
+        <tr><th>Winning Player</th><th>Losing Player</th><th>Date</th></tr>
+        <tr ng-repeat="score in scores">
+                        
+                        <td>{{score.winning_user_name}}</td>
+                        <td>{{score.losing_user_name}}</td>
+                        <td>{{score.date}}</td>
+                    </tr>
+        </table>
+        </div>
+        </div>
+         <div class="row">
+        <div class="col-md-8">
+            <h3>User Rankings</h3>
+        </div>
+        <div class="col-md-8">
+        <table class="table">
+        <tr><th>User</th><th>Wins</th><th>Losses</th><th>Games</th><th>Winning Percentage</th></tr>
+        <tr ng-repeat="ranking in rankings">
+                        
+                        <td>{{ranking.user_name}}</td>
+                        <td>{{ranking.wins}}</td>
+                        <td>{{ranking.losses}}</td>
+                        <td>{{ranking.games}}</td>
+                        <td>{{ranking.winning_percentage}}</td>
+                    </tr>
+        </table>
+        </div>
+    </div>
+</div>

@@ -7,19 +7,21 @@ primarily with communication to/from the API's users."""
 
 import logging
 import endpoints
-from protorpc import remote, messages
+from protorpc import remote, messages, message_types
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 
 from models import DECKOFCARDS
 from models import User, Game, Score
 from models import StringMessage, NewGameForm, GameForm, PlayCardForm,\
-    DrawCardForm, ScoreForms, ScoreForm, GameForms, UserRankingForm, UserRankingForms, TestForm, GameHistoryForm
-from utils import get_by_urlsafe
+    DrawCardForm, ScoreForms, ScoreForm, GameForms, UserRankingForm, UserRankingForms, TestForm, GameHistoryForm, UserForm
 from google.appengine.ext import ndb
 
+from settings import WEB_CLIENT_ID
+from utils import get_by_urlsafe
+
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
-GET_GAME_REQUEST = endpoints.ResourceContainer(
+GET_GAME_REQUEST = endpoints.ResourceContainer( message_types.VoidMessage,
         urlsafe_game_key=messages.StringField(1),)
 CANCEL_GAME_REQUEST = endpoints.ResourceContainer(
         urlsafe_game_key=messages.StringField(1),)
@@ -38,6 +40,9 @@ TEST_REQUEST = endpoints.ResourceContainer(get_rankings=messages.BooleanField(1)
 GET_RANKINGS_REQUEST = endpoints.ResourceContainer(get_rankings=messages.BooleanField(1))
 
 MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
+EMAIL_SCOPE = endpoints.EMAIL_SCOPE
+API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
+
 
 def ranking_to_form(self):
     uf = UserRankingForm()
@@ -48,16 +53,64 @@ def ranking_to_form(self):
     uf.winning_percentage = self[4]
     return uf
 
-@endpoints.api(name='crazyeights', version='v1')
+@endpoints.api(name='crazyeights', version='v1',allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID],
+    scopes=[EMAIL_SCOPE])
 class CrazyEightsApi(remote.Service):
-    """Game API"""
+
+
+    def _copyUserToForm(self, current_user):
+        uf = UserForm()
+        uf.user_name = current_user.name
+        uf.email = current_user.email
+        return uf
+
+
+    def _getInfoFromUser(self):
+        """Return user Profile from datastore, creating new one if non-existent."""
+        # make sure user is authed
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # get User from datastore
+        user_email = user.email()
+        current_user = User.query(User.email ==user_email).get()
+        # create new User if not there
+        if not current_user:
+            current_user = User(
+                name = user.nickname(),
+                email= user.email(),
+            )
+            current_user.put()
+
+        return current_user    # return User
+
+
+    def _doUser(self, save_request=None):
+        """Get user Profile and return to user, possibly updating it first."""
+        # get user Profile
+        current_user = self._getInfoFromUser()
+
+        # if saveProfile(), process user-modifyable fields
+        if save_request:
+            current_user.name = save_request.user_name
+            current_user.email = save_request.email
+            current_user.put()
+
+        # return UserMiniForm
+        return self._copyUserToForm(current_user)
+
+    
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=StringMessage,
                       path='user',
                       name='create_user',
                       http_method='POST')
     def create_user(self, request):
-        """Create a User. Requires a unique username"""
+        """Create a User. Requires a unique username and e-mail"""
+        if User.query(User.email == request.email).get():
+            raise endpoints.ConflictException(
+                    'A User with that e-mail already exists!')
         if User.query(User.name == request.user_name).get():
             raise endpoints.ConflictException(
                     'A User with that name already exists!')
@@ -66,9 +119,27 @@ class CrazyEightsApi(remote.Service):
         return StringMessage(message='User {} created!'.format(
                 request.user_name))
 
+    
+
+    
+
+    @endpoints.method(message_types.VoidMessage, UserForm,
+            path='profile', http_method='GET', name='getProfile')
+    def getProfile(self, request):
+        """Return user profile."""
+        return self._doUser()
+
+
+    @endpoints.method(USER_REQUEST, UserForm,
+            path='profile', http_method='POST', name='saveProfile')
+    def saveProfile(self, request):
+        """Update & return user profile."""
+        return self._doUser(request)
+
+
     @endpoints.method(request_message=NEW_GAME_REQUEST,
                       response_message=GameForm,
-                      path='game',
+                      path='games',
                       name='new_game',
                       http_method='POST')
     def new_game(self, request):
@@ -158,7 +229,7 @@ class CrazyEightsApi(remote.Service):
             game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
             return game.to_form('Card played!')
         else:
-              return game.to_form('Card not valid!')
+              return game.to_form('Card not valid!' + game.current_suit + ' ' + request.card_suit)
         return game.to_form('This should not be returned')
    
     @endpoints.method(request_message=DRAW_CARD_REQUEST,
@@ -189,24 +260,25 @@ class CrazyEightsApi(remote.Service):
                       http_method='GET')
     def get_user_scores(self, request):
         """Returns all of an individual User's scores"""
-        user = User.query(User.name == request.user_name).get()
+        user = self._getInfoFromUser()
         if not user:
             raise endpoints.NotFoundException(
-                    'A User with that name does not exist!')
+                    'User is not signed in!')
+        
         scores = Score.query(ndb.OR(Score.winning_user == user.key,Score.losing_user==user.key))
         return ScoreForms(items=[score.to_form() for score in scores])
   
     @endpoints.method(request_message=GET_USER_GAMES_REQUEST,
                     response_message=GameForms,
-                    path='game/usergames/{user_name}',
+                    path='profile/user_games',
                     name='get_user_games',
                     http_method='GET')
     def get_user_games(self, request):
          """Returns all of a user's active games"""
-         user = User.query(User.name == request.user_name).get()
+         user = self._getInfoFromUser()
          if not user:
             raise endpoints.NotFoundException(
-                    'A User with that name does not exist!')
+                    'User is not signed in!')
          user_games = Game.query(ndb.AND(ndb.OR(Game.user_one == user.key,Game.user_two==user.key),Game.game_over == False))
          return GameForms(items=[game.to_form("") for game in user_games])
   
