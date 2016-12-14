@@ -227,7 +227,10 @@ class CrazyEightsApi(remote.Service):
                     game.end_game(game.user_one_turn)
                     return game.to_form('Game over! ' + game.user_two.get().name + ' wins!')
             game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
+            if game.user_two.get().name == 'Computer':
+                game.computer_play_card(game.computer_take_turn)
             return game.to_form('Card played!')
+            
         else:
               return game.to_form('Card not valid!' + game.current_suit + ' ' + request.card_suit)
         return game.to_form('This should not be returned')

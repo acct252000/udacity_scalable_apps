@@ -51,8 +51,11 @@
         <section ng-if="is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_one_hand_cards">
             <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
         </section>
-         <section ng-if="!is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards">
+         <section ng-if="!is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards"><h5>Me</h5>
             <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
+        </section>
+         <section class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards"><h5>Computer</h5>
+            <img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}">
         </section>
         
     </div>

@@ -5,6 +5,7 @@ classes they can include methods (such as 'to_form' and 'new_game')."""
 import random
 from datetime import date
 from protorpc import messages
+from collections import Counter
 from google.appengine.ext import ndb
 
 
@@ -38,6 +39,8 @@ class Game(ndb.Model):
     cancelled = ndb.BooleanProperty(required=True)
     move = ndb.StringProperty(repeated=True)
     date = ndb.DateProperty(required=True)
+    computer_card = ndb.StringProperty()
+    computer_crazy_suit = ndb.StringProperty()
 
     @classmethod
     def new_game(cls, user_one, user_two):
@@ -51,10 +54,13 @@ class Game(ndb.Model):
 	                discard_pile = cards[14],
                     current_suit = DECKOFCARDS[int(cards[14])][0],
                     undrawn_cards = ','.join(cards[15:]),
-                    user_one_turn = bool(random.getrandbits(1)),
+                    #user_one_turn = bool(random.getrandbits(1)),
+                    user_one_turn = True,
                     cancelled = False,
                     game_over = False,
-                    date=date.today())
+                    date=date.today(),
+                    computer_card='99',
+                    computer_crazy_suit='none')
         game.put()
         return game
 
@@ -80,6 +86,10 @@ class Game(ndb.Model):
             card_string = '(' + card[0] + ',' + card[1] + ')'
             card_values.append(card_string)
         return card_values
+
+    def to_string(cls, card):
+        card_number = DECKOFCARDS.index(card)
+        return str(card_number)
 
 
     def card_in_hand(self, card_number, card_suit):
@@ -120,8 +130,11 @@ class Game(ndb.Model):
         self.move.append(','.join(game_move))
         self.put()
 
-    def draw_card(self,user_one_turn):
+    def card_callback():
+        #This line is intentionally left blank
+        callback_variable = 0
 
+    def draw_card(self,user_one_turn, callback=card_callback):
         # return string number of top undrawn card
         undrawn_card_list = self.undrawn_cards.split(',')
         # set reshuffle to true if drawing last card
@@ -150,6 +163,94 @@ class Game(ndb.Model):
         game_move = [user_name, 'draw', DECKOFCARDS[int(drawn_card)][0],DECKOFCARDS[int(drawn_card)][1]]
         self.move.append(','.join(game_move))
         self.put()
+        callback()
+
+    def computer_play_card(self, callback = card_callback):
+
+        current_number = DECKOFCARDS[int(self.discard_pile.split(',')[0])][1]
+        computer_hand_list = self.player_two_hand.split(',')
+        cards_in_hand = []
+        for card_id in computer_hand_list:
+            card = DECKOFCARDS[int(card_id)]
+            cards_in_hand.append(card)
+        #cards_in_hand = self.to_cards(self.player_two_hand)
+        suits_held = Counter([x for (x,y) in cards_in_hand])
+        suits = suits_held.most_common()
+        cards_matching_number = []
+        for player_card in cards_in_hand:
+            if player_card[1] == current_number:
+                cards_matching_number.append(player_card)
+        first_suit = suits[0][0]
+        second_suit = first_suit
+        third_suit = first_suit
+        fourth_suit = first_suit
+        if len(suits) > 1:
+           second_suit = suits[1][0]
+        if len(suits) > 2:
+           third_suit = suits[2][0]
+        if len(suits) > 3:
+           fourth_suit = suits[3][0]
+    
+        if first_suit == self.current_suit:
+            for card in cards_in_hand:
+                if card[0] == first_suit and card[1] != '8':
+                     selected_card = card
+        elif first_suit in [x[0] for x in cards_matching_number]:
+            for card in cards_matching_number:
+                if card[1] == current_number and card[0] == first_suit:
+                    selected_card = card
+        elif second_suit == self.current_suit:
+            for card in cards_in_hand:
+                if card[0] == second_suit and card[1] != '8':
+                    selected_card = card
+        elif second_suit in [x[0] for x in cards_matching_number]:
+            for card in cards_matching_number:
+                if card[1] == current_number and card[0] == second_suit:
+                    selected_card = card
+        elif third_suit == self.current_suit:
+            for card in cards_in_hand:
+                if card[0] == third_suit and card[1] != '8':
+                   selected_card = card
+        elif third_suit in [x[0] for x in cards_matching_number]:
+            for card in cards_matching_number:
+                if card[1] == current_number and card[0] == third_suit:
+                   selected_card = card
+        elif fourth_suit == self.current_suit:
+            for card in cards_in_hand:
+                if card[0] == fourth_suit and card[1] != '8':
+                   selected_card = card
+        elif fourth_suit in [x[0] for x in cards_matching_number]:
+            for card in cards_matching_number:
+                if card[1] == current_number and card[0] == fourth_suit:
+                    selected_card = card
+        elif '8' in [x[1] for x in cards_in_hand]:
+            for card in cards_in_hand:
+                if card[1] == '8':
+                    selected_card = card
+        else:
+            selected_card = ('none','none')
+
+        if selected_card[0] == 'none':
+            self.computer_crazy_suit = 'none'
+            self.computer_card = '99'
+        elif selected_card[1] == '8':
+            self.computer_crazy_suit = first_suit
+            self.computer_card = self.to_string(selected_card)
+        else:
+            self.computer_crazy_suit = selected_card[0]
+            self.computer_card = self.to_string(selected_card)
+        callback()
+
+    def computer_take_turn(self):
+        
+        while self.computer_card == '99':
+            self.draw_card(false, self.computer_card)
+            
+
+        if self.computer_card != '99':
+            self.current_suit = self.computer_crazy_suit
+            computer_card_type = self.to_card_type(self.computer_card)
+            self.discard_card(False,computer_card_type[1],computer_card_type[0])
 
     def to_form(self, form_message):
         """Returns a GameForm representation of the Game"""
