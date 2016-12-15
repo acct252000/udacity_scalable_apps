@@ -3,6 +3,7 @@ entities used by the Game. Because these classes are also regular Python
 classes they can include methods (such as 'to_form' and 'new_game')."""
 
 import random
+import logging
 from datetime import date
 from protorpc import messages
 from collections import Counter
@@ -41,6 +42,7 @@ class Game(ndb.Model):
     date = ndb.DateProperty(required=True)
     computer_card = ndb.StringProperty()
     computer_crazy_suit = ndb.StringProperty()
+    game_message = ndb.StringProperty()
 
     @classmethod
     def new_game(cls, user_one, user_two):
@@ -64,17 +66,29 @@ class Game(ndb.Model):
         game.put()
         return game
 
+    def to_text_list(cls, card_string):
+        # split string into integer list
+        
+        card_value = DECKOFCARDS[int(card_string)]
+        # add text cards to list
+        logging.info(card_value)
+        
+        return list(card_value)
+
     def to_card_type(cls, card_string):
         # split string into integer list
-        card_list = card_string.split(',')
-        card_list = map(int,card_list)
+        if card_string:
+            card_list = card_string.split(',')
+            card_list = map(int,card_list)
         # add text cards to list
-        card_values = []
-        for card_number in card_list:
-            card = DECKOFCARDS[card_number]
-            card_string = '(' + card[0] + ',' + card[1] + ')'
-            card_values.append(card_string)
-            card_values_string = '*'.join(card_values)
+            card_values = []
+            for card_number in card_list:
+                card = DECKOFCARDS[card_number]
+                card_string = '(' + card[0] + ',' + card[1] + ')'
+                card_values.append(card_string)
+                card_values_string = '*'.join(card_values)
+        else:
+            card_values_string = card_string
         return card_values_string
 
     def to_cards(cls, card_string):
@@ -134,7 +148,7 @@ class Game(ndb.Model):
         #This line is intentionally left blank
         callback_variable = 0
 
-    def draw_card(self,user_one_turn, callback=card_callback):
+    def draw_card(self,user_one_turn, callback = card_callback):
         # return string number of top undrawn card
         undrawn_card_list = self.undrawn_cards.split(',')
         # set reshuffle to true if drawing last card
@@ -154,9 +168,9 @@ class Game(ndb.Model):
             user_name = self.user_two.get().name
         if reshuffle == True:
             discard_pile_list = self.discard_pile.split(',')
-            last_discard_card = discarded_pile_list.pop(0)
-            random.shuffle(discarded_pile_list)
-            self.undrawn_cards = ','.join(discarded_pile_list)
+            last_discard_card = discard_pile_list.pop(0)
+            random.shuffle(discard_pile_list)
+            self.undrawn_cards = ','.join(discard_pile_list)
             self.discard_pile = last_discard_card
         else:
             self.undrawn_cards = ','.join(undrawn_card_list)
@@ -239,20 +253,30 @@ class Game(ndb.Model):
         else:
             self.computer_crazy_suit = selected_card[0]
             self.computer_card = self.to_string(selected_card)
+     
         callback()
 
     def computer_take_turn(self):
         
         while self.computer_card == '99':
-            self.draw_card(false, self.computer_card)
+            self.draw_card(False, self.computer_play_card)
             
 
         if self.computer_card != '99':
             self.current_suit = self.computer_crazy_suit
-            computer_card_type = self.to_card_type(self.computer_card)
-            self.discard_card(False,computer_card_type[1],computer_card_type[0])
+            computer_card_type = self.to_text_list(self.computer_card)
+            if len(self.player_two_hand.split(',')) < 2:
+                self.discard_card(False,computer_card_type[1],computer_card_type[0])
+                self.end_game(False)
+                self.game_message = 'Game Over!  Computer wins!'
+                
+            else:
+                self.discard_card(False,computer_card_type[1],computer_card_type[0])
+                self.computer_card = '99'
+                
+        
 
-    def to_form(self, form_message):
+    def to_form(self, form_message=''):
         """Returns a GameForm representation of the Game"""
         form = GameForm()
         form.urlsafe_key = self.key.urlsafe()
@@ -267,7 +291,10 @@ class Game(ndb.Model):
         form.game_over = self.game_over
         form.cancelled = self.cancelled
         form.date = str(self.date)
-        form.message = form_message
+        if self.game_message:
+          form.message = self.game_message
+        else:
+            form.message = form_message
         return form
 
     def to_history_form(self):

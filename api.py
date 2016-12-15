@@ -219,16 +219,17 @@ class CrazyEightsApi(remote.Service):
             if game.user_one_turn == True:
                 if len(game.player_one_hand.split(',')) == 1:
                     game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
-                    game.end_game(game.user_one_turn)
+                    game.end_game(True)
                     return game.to_form('Game over! ' + game.user_one.get().name + ' wins!')
             else:
                 if len(game.player_two_hand.split(',')) == 1:
                     game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
-                    game.end_game(game.user_one_turn)
+                    game.end_game(False)
                     return game.to_form('Game over! ' + game.user_two.get().name + ' wins!')
             game.discard_card(game.user_one_turn, request.card_number, request.card_suit)
             if game.user_two.get().name == 'Computer':
                 game.computer_play_card(game.computer_take_turn)
+                
             return game.to_form('Card played!')
             
         else:

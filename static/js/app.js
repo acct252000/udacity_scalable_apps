@@ -20,6 +20,10 @@ var app = angular.module('crazyeightsApp',
                     templateUrl: '/partials/game_history.html',
                     controller: 'GameHistoryCtrl'
                 }).
+                when('/game/cancel/:urlsafe_key', {
+                    templateUrl: '/partials/game_cancel.html',
+                    controller: 'CancelGameCtrl'
+                }).
                 when('/game/:urlsafe_key', {
                     templateUrl: '/partials/game.html',
                     controller: 'PlayGameCtrl'

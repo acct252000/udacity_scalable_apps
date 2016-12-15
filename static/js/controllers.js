@@ -122,12 +122,8 @@ crazyeightsApp.controllers.controller('GamesCtrl',
         $scope.user_two_name = '';
         $scope.user_games = [];
        
-        /**
-         * Initializes the Games page.
-         * Update the profile if the user's profile has been stored.
-         */
-        $scope.init = function () {
-            var retrieveGamesCallback = function () {
+
+        $scope.retrieveGamesCallback = function(){
              
                 $scope.loading = true;
          
@@ -154,11 +150,17 @@ crazyeightsApp.controllers.controller('GamesCtrl',
                });
             });
             };
+        /**
+         * Initializes the Games page.
+         * Update the profile if the user's profile has been stored.
+         */
+        $scope.init = function () {
+       
             if (!oauth2Provider.signedIn) {
                 var modalInstance = oauth2Provider.showLoginModal();
-                modalInstance.result.then(retrieveGamesCallback);
+                modalInstance.result.then($scope.retrieveGamesCallback);
             } else {
-                retrieveGamesCallback();
+                $scope.retrieveGamesCallback();
             }
         };
 
@@ -191,7 +193,7 @@ crazyeightsApp.controllers.controller('GamesCtrl',
                             $scope.submitted = false;
                             $scope.user_one_name = '';
                             $scope.user_two_name = '';
-                            retrieveGamesCallback();
+                            $scope.retrieveGamesCallback();
                             $log.info($scope.messages + JSON.stringify(resp.result));
                         }
                     });
@@ -438,6 +440,108 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function ($scope, $log, $r
             }
     };
 });
+
+/**
+ * @ngdoc controller
+ * @name PlayGameCtrl
+ *
+ * @description
+ * A controller used for the Show conferences page.
+ */
+crazyeightsApp.controllers.controller('CancelGameCtrl', function ($scope, $log, $routeParams, oauth2Provider, current_user_name, HTTP_ERRORS) {
+
+    /**
+     * Holds the status if the query is being executed.
+     * @type {boolean}
+     */
+    $scope.submitted = false;
+    $scope.current_user = current_user_name.name;
+
+   
+    /**
+     * Holds the game currently displayed in the page.
+     * @type {Array}
+     */
+    $scope.game = [];
+    
+            $scope.cancelGame = function () {
+            $scope.submitted = true;
+            $scope.loading = true;
+            gapi.client.crazyeights.cancel_game({
+            urlsafe_game_key: $routeParams.urlsafe_key
+            }).
+                execute(function (resp) {
+                    $scope.$apply(function () {
+                        $scope.loading = false;
+                        if (resp.error) {
+                            // The request has failed.
+                            var errorMessage = resp.error.message || '';
+                            $scope.messages = 'Failed to cancel a game : ' + errorMessage;
+                            $scope.alertStatus = 'warning';
+                            
+
+                            if (resp.code && resp.code == HTTP_ERRORS.UNAUTHORIZED) {
+                                oauth2Provider.showLoginModal();
+                                return;
+                            }
+                        } else {
+                            // The request has succeeded.
+                            $scope.messages = 'The game has been cancelled';
+                            $scope.alertStatus = 'success';
+                            $scope.submitted = false;
+                            
+
+                            $log.info($scope.messages + JSON.stringify(resp.result));
+                        }
+                    });
+                });
+        };
+    /**
+     * Retrieves the conferences to attend by calling the conference.getProfile method and
+     * invokes the conference.getConference method n times where n == the number of the conferences to attend.
+     */
+    $scope.init = function () {
+        var retrieveGameCancelCallback = function () {
+        $scope.loading = true;
+        $scope.current_user = current_user_name.name;
+        gapi.client.crazyeights.get_game({
+            urlsafe_game_key: $routeParams.urlsafe_key
+        }).
+            execute(function (resp) {
+                $scope.$apply(function () {
+                    if (resp.error) {
+                        // The request has failed.
+                        var errorMessage = resp.error.message || '';
+                        $scope.messages = 'Failed to obtain the game : ' + errorMessage;
+                        $scope.alertStatus = 'warning';
+                        $log.error($scope.messages);
+
+                        if (resp.code && resp.code == HTTP_ERRORS.UNAUTHORIZED) {
+                            oauth2Provider.showLoginModal();
+                            return;
+                        }
+                    } else {
+                        // The request has succeeded.
+                        $scope.game = resp.result;
+                        $scope.user_one_name = resp.result.user_one_name
+                        $scope.user_two_name = resp.result.user_two_name
+                        $scope.date = resp.result.date
+                        $scope.loading = false;
+                        
+                    }
+                    $scope.submitted = true;
+                });
+            });
+        };
+        if (!oauth2Provider.signedIn) {
+                var modalInstance = oauth2Provider.showLoginModal();
+                modalInstance.result.then(retrieveGameCancelCallback);
+            } else {
+                retrieveGameCancelCallback();
+            }
+    };
+});
+
 
 crazyeightsApp.controllers.controller('GameHistoryCtrl', function ($scope, $log, $routeParams, oauth2Provider, current_user_name, HTTP_ERRORS) {
 
