@@ -2,7 +2,7 @@
 
 ##Set-Up Instructions:
 
-APIs can be accessed at [https://udacity-scalable-game.appspot.com/_ah/api/explorer[(https://udacity-scalable-game.appspot.com/_ah/api/explorer)
+APIs can be accessed at [https://udacity-scalable-game.appspot.com/_ah/api/explorer](https://udacity-scalable-game.appspot.com/_ah/api/explorer)
 
 ##Game Description:
 
