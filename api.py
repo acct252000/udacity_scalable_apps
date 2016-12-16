@@ -14,8 +14,8 @@ from google.appengine.api import taskqueue
 from models import DECKOFCARDS
 from models import User, Game, Score
 from models import StringMessage, NewGameForm, GameForm, PlayCardForm
-from models import DrawCardForm, ScoreForms, ScoreForm, GameForms
-from models import UserRankingForm, UserRankingForms, TestForm
+from models import ScoreForms, ScoreForm, GameForms
+from models import UserRankingForm, UserRankingForms
 from models import GameHistoryForm, UserForm
 from google.appengine.ext import ndb
 
@@ -23,25 +23,15 @@ from settings import WEB_CLIENT_ID
 from utils import get_by_urlsafe
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
-GET_GAME_REQUEST = endpoints.ResourceContainer(message_types.VoidMessage,
-                                               urlsafe_game_key=(
-                                               messages.StringField(1)),)
-CANCEL_GAME_REQUEST = endpoints.ResourceContainer(
-        urlsafe_game_key=messages.StringField(1),)
-GET_GAME_HISTORY_REQUEST = endpoints.ResourceContainer(
+GAME_REQUEST = endpoints.ResourceContainer(
         urlsafe_game_key=messages.StringField(1),)
 PLAY_CARD_REQUEST = endpoints.ResourceContainer(
     PlayCardForm,
-    urlsafe_game_key=messages.StringField(1),)
-DRAW_CARD_REQUEST = endpoints.ResourceContainer(
-    DrawCardForm,
     urlsafe_game_key=messages.StringField(1),)
 USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1),
                                            email=messages.StringField(2))
 GET_USER_GAMES_REQUEST = (
     endpoints.ResourceContainer(user_name=messages.StringField(1)))
-GET_RANKINGS_REQUEST = (
-    endpoints.ResourceContainer(get_rankings=messages.BooleanField(1)))
 
 MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
@@ -49,6 +39,7 @@ API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
 
 def ranking_to_form(self):
+    """converts user ranking to form"""
     uf = UserRankingForm()
     uf.user_name = self[0]
     uf.wins = self[1]
@@ -62,8 +53,10 @@ def ranking_to_form(self):
                allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID],
                scopes=[EMAIL_SCOPE])
 class CrazyEightsApi(remote.Service):
+    """api to play crazyeights game"""
 
     def _copyUserToForm(self, current_user):
+        """copies user to UserForm"""
         uf = UserForm()
         uf.user_name = current_user.name
         uf.email = current_user.email
@@ -99,7 +92,6 @@ class CrazyEightsApi(remote.Service):
         # if saveProfile(), process user-modifyable fields
         if save_request:
             current_user.name = save_request.user_name
-            current_user.email = save_request.email
             current_user.put()
 
         # return UserMiniForm
@@ -158,7 +150,7 @@ class CrazyEightsApi(remote.Service):
 
         return game.to_form("New game created!")
 
-    @endpoints.method(request_message=GET_GAME_REQUEST,
+    @endpoints.method(request_message=GAME_REQUEST,
                       response_message=GameForm,
                       path='game/{urlsafe_game_key}',
                       name='get_game',
@@ -183,7 +175,7 @@ class CrazyEightsApi(remote.Service):
                       name='play_card',
                       http_method='PUT')
     def play_card(self, request):
-        """Makes a move. Returns a game state with message"""
+        """Plays a card. Returns a game state with message"""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         valid_card = False
         if game.game_over is True:
@@ -196,6 +188,7 @@ class CrazyEightsApi(remote.Service):
         top_card_number = DECKOFCARDS[int(game.discard_pile.split(',')[0])][1]
         # check if played card crazy eight
         if request.card_number == '8':
+            logging.info("crazy eight")
             if request.crazy_suit:
                 game.current_suit = request.crazy_suit
             else:
@@ -236,11 +229,9 @@ class CrazyEightsApi(remote.Service):
             return game.to_form('Card played!')
 
         else:
-            return game.to_form(('Card not valid!' + game.current_suit +
-                                 ' ' + request.card_suit))
-        return game.to_form('This should not be returned')
+            return game.to_form('Card not valid!')
 
-    @endpoints.method(request_message=DRAW_CARD_REQUEST,
+    @endpoints.method(request_message=GAME_REQUEST,
                       response_message=GameForm,
                       path='game/draw/{urlsafe_game_key}',
                       name='draw_card',
@@ -253,7 +244,8 @@ class CrazyEightsApi(remote.Service):
         game.draw_card(game.user_one_turn)
         return game.to_form('Card drawn!')
 
-    @endpoints.method(response_message=ScoreForms,
+    @endpoints.method(message_types.VoidMessage,
+                      response_message=ScoreForms,
                       path='scores',
                       name='get_scores',
                       http_method='GET')
@@ -293,13 +285,14 @@ class CrazyEightsApi(remote.Service):
                                         Game.game_over == False))
         return GameForms(items=[game.to_form("") for game in user_games])
 
-    @endpoints.method(request_message=GET_RANKINGS_REQUEST,
+    @endpoints.method(message_types.VoidMessage,
                       response_message=UserRankingForms,
                       path='rankings',
                       name='get_all_rankings',
                       http_method='GET'
                       )
     def get_all_rankings(self, request):
+        """returns rankings by winning percentage ranked descending"""
         scores = Score.query()
         users = User.query()
 
@@ -332,26 +325,26 @@ class CrazyEightsApi(remote.Service):
         return UserRankingForms(items=([ranking_to_form(result)
                                        for result in user_results]))
 
-    @endpoints.method(request_message=GET_GAME_HISTORY_REQUEST,
+    @endpoints.method(request_message=GAME_REQUEST,
                       response_message=GameHistoryForm,
                       path='game/history/{urlsafe_game_key}',
                       name='get_game_history',
                       http_method='GET')
     def get_game_history(self, request):
-        """Return the current game state."""
+        """Return the current game history."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
             return game.to_history_form()
         else:
             raise endpoints.NotFoundException('Game not found!')
 
-    @endpoints.method(request_message=CANCEL_GAME_REQUEST,
+    @endpoints.method(request_message=GAME_REQUEST,
                       response_message=GameForm,
                       path='game/cancel/{urlsafe_game_key}',
                       name='cancel_game',
                       http_method='PUT')
     def cancel_game(self, request):
-        """Return the current game state."""
+        """Cancel the current game."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game.game_over is True:
             return game.to_form('Game already over and cannot be cancelled!')

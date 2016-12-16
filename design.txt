@@ -1,0 +1,15 @@
+What additional properties did you add to your models and why?
+
+I generally restructured the game from a one-player guessing game into a two player card game.
+User requirements was the primary factor in my design decision, constrained by the resources available to implementation.  Specifically, this game had the highest potential usage among the target user base( my children) of those games played that could be built within the expected project time frame.
+After designing a two player game, computer logic was added to increase utilization by allowing for continued unsupervised usage by the target user base with minimal requests to technical support.
+In so doing, apis were necessary for both playing and drawing cards so that these considerations could be undertaken individually.
+The decision was also made to implement a front-end.  This was a challenge as a proper front-end in a two player game must not allow a user to make changes on another users account.  The front-end developed therefore incorporate google+ sign-in and an angular service holding to current user to somewhat ensure fair play.
+
+What were some of the trade-offs and struggles you faced when implementing the new game logic?
+
+The largest struggle in implementing this card game would be storing the cards as a string of numbers but evaluating plays based on their representative card values.  The intent was to limit storage space by avoiding repeated fields for cards in multiple places.
+Additional challenges were faced in implementing logic evaluating cards played.  Early on, bugs were discovered allowing users to play cards not in their hands or to continue to play cards after the game was over.
+Lastly, designing somewhat intelligent computer logic was also a hurdle.  Introducing callbacks to draw as many cards as necessary without drawing cards needlessly was a challenge.
+
+

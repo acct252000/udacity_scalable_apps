@@ -27,7 +27,7 @@ CARD_NUMBER_VALUES = ['A', '2', '3', '4', '5',
                       '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 # Hold suits for standard deck of cards
 CARD_SUITS = ['hearts', 'diamonds', 'clubs', 'spades']
-#variable to hold list of tuples for standard deck of cards
+# variable to hold list of tuples for standard deck of cards
 DECKOFCARDS = []
 
 # populate DECKOFCARDS with tuples of (suit, card number)
@@ -50,7 +50,7 @@ class User(ndb.Model):
 class Game(ndb.Model):
     """Game object that lists data necessary for game
     Attributes:
-        player_one_hand: text property holding comma sepearated 
+        player_one_hand: text property holding comma separated
                           cardnumbers (0-51) of hand
         player_two_hand: text property holding comma separated
                           cardnumbers (0-51) of hand
@@ -69,7 +69,7 @@ class Game(ndb.Model):
         date: date property holding date created
         computer_card: string property used for computer games, the string
                        number of the card selected by the computer to play
-        computer_crazy_suit: string property used for computer games, the 
+        computer_crazy_suit: string property used for computer games, the
                              suit the computer has selected when playing an 8
         game_message: string message used for messages from computer play
     """
@@ -115,7 +115,7 @@ class Game(ndb.Model):
     def to_text_list(cls, card_string):
         """convert string of card number(0-51) from computer play
            into a list object representing card value
-        """  
+        """
         # split string into integer list
         card_value = DECKOFCARDS[int(card_string)]
         # add text cards to list
@@ -164,7 +164,9 @@ class Game(ndb.Model):
         return str(card_number)
 
     def card_in_hand(self, card_number, card_suit):
+        """function to determine if card played is in player's hand"""
         card_in_question = (card_suit, card_number)
+        # convert to card number and check if in hand
         card_in_question_number = str(DECKOFCARDS.index(card_in_question))
         if self.user_one_turn:
             cards_held_list = self.player_one_hand.split(',')
@@ -176,7 +178,8 @@ class Game(ndb.Model):
             return False
 
     def discard_card(self, user_one_turn, play_card_number, play_card_suit):
-        # update discard pile
+        """function to discard card from player's hand and change turn"""
+        # determine discarded card number
         discarded_card = (play_card_suit, play_card_number)
         discarded_card_number = DECKOFCARDS.index(discarded_card)
         # add card to discarded pile
@@ -184,7 +187,7 @@ class Game(ndb.Model):
         discarded_pile_list.insert(0, str(discarded_card_number))
         self.discard_pile = ','.join(discarded_pile_list)
 
-        # update player hand and game history
+        # update player hand and game history and cycle turn
         if user_one_turn:
             player_hand_list = self.player_one_hand.split(',')
             player_hand_list.remove(str(discarded_card_number))
@@ -202,10 +205,16 @@ class Game(ndb.Model):
         self.put()
 
     def card_callback():
-        # This line is intentionally left blank
+        """dummy callbackfunction for when callback not needed in two
+           person play
+        """
+        # This line is intentionally assigned to zero
         callback_variable = 0
 
     def draw_card(self, user_one_turn, callback=card_callback):
+        """function to draw card from undrawn cards and add to hand
+           and reshuffle if no more cards to draw
+        """
         # return string number of top undrawn card
         undrawn_card_list = self.undrawn_cards.split(',')
         # set reshuffle to true if drawing last card
@@ -213,6 +222,7 @@ class Game(ndb.Model):
         if len(undrawn_card_list) == 1:
             reshuffle = True
         drawn_card = undrawn_card_list.pop(0)
+        # add card to player hand
         if user_one_turn is True:
             player_hand_list = self.player_one_hand.split(',')
             player_hand_list.append(drawn_card)
@@ -223,6 +233,7 @@ class Game(ndb.Model):
             player_hand_list.append(drawn_card)
             self.player_two_hand = ','.join(player_hand_list)
             user_name = self.user_two.get().name
+        # reshuffle cards
         if reshuffle is True:
             discard_pile_list = self.discard_pile.split(',')
             last_discard_card = discard_pile_list.pop(0)
@@ -238,20 +249,24 @@ class Game(ndb.Model):
         callback()
 
     def computer_play_card(self, callback=card_callback):
-
+        """game logic for computer to select card to play"""
+        # determine card number
         current_number = DECKOFCARDS[int(self.discard_pile.split(',')[0])][1]
+        # convert card numbers to cards for game logic
         computer_hand_list = self.player_two_hand.split(',')
         cards_in_hand = []
         for card_id in computer_hand_list:
             card = DECKOFCARDS[int(card_id)]
             cards_in_hand.append(card)
-        # cards_in_hand = self.to_cards(self.player_two_hand)
+        # count number of cards of each suit
         suits_held = Counter([x for (x, y) in cards_in_hand])
         suits = suits_held.most_common()
+        # determine if have matching number suit
         cards_matching_number = []
         for player_card in cards_in_hand:
             if player_card[1] == current_number:
                 cards_matching_number.append(player_card)
+        # ordinal suits
         first_suit = suits[0][0]
         second_suit = first_suit
         third_suit = first_suit
@@ -262,7 +277,7 @@ class Game(ndb.Model):
             third_suit = suits[2][0]
         if len(suits) > 3:
             fourth_suit = suits[3][0]
-
+        # play by suit from most common suit down, excluding 8
         if first_suit == self.current_suit:
             for card in cards_in_hand:
                 if card[0] == first_suit and card[1] != '8':
@@ -295,13 +310,15 @@ class Game(ndb.Model):
             for card in cards_matching_number:
                 if card[1] == current_number and card[0] == fourth_suit:
                     selected_card = card
+        # if no other cards, play eight if available
         elif '8' in [x[1] for x in cards_in_hand]:
             for card in cards_in_hand:
                 if card[1] == '8':
                     selected_card = card
+        # no card to pay
         else:
             selected_card = ('none', 'none')
-
+        # set model attribute based on selected card
         if selected_card[0] == 'none':
             self.computer_crazy_suit = 'none'
             self.computer_card = '99'
@@ -314,11 +331,16 @@ class Game(ndb.Model):
         callback()
 
     def computer_take_turn(self):
+        """function that draws for computer until card can be played
+           then discards card and ends game if necessary
+        """
         while self.computer_card == '99':
             self.draw_card(False, self.computer_play_card)
+        # discard card if one selected
         if self.computer_card != '99':
             self.current_suit = self.computer_crazy_suit
             computer_card_type = self.to_text_list(self.computer_card)
+            # end game if playing last card
             if len(self.player_two_hand.split(',')) < 2:
                 self.discard_card(False, computer_card_type[1],
                                   computer_card_type[0])
@@ -352,6 +374,7 @@ class Game(ndb.Model):
         return form
 
     def to_history_form(self):
+        """returns a history form representation of the game history"""
         form = GameHistoryForm()
         form.urlsafe_key = self.key.urlsafe()
         form.user_one_name = self.user_one.get().name
@@ -361,11 +384,13 @@ class Game(ndb.Model):
         return form
 
     def cancel_game(self):
+        """cancels current game"""
         self.cancelled = True
         self.game_over = True
         self.put()
 
     def end_game(self, user_one_turn):
+        """ends game when over"""
         self.game_over = True
         self.put()
         if user_one_turn:
@@ -379,24 +404,27 @@ class Game(ndb.Model):
 
 
 class Score(ndb.Model):
-    """Score object"""
+    """Score object that tracks winners and losers.
+        Attributes:
+            winning_user: winning user key
+            losing_user: losing user key
+            date: date Game completed
+    """
     winning_user = ndb.KeyProperty(required=True, kind='User')
     losing_user = ndb.KeyProperty(required=True, kind='User')
     date = ndb.DateProperty(required=True)
 
     def to_form(self):
+        """returns form representation of Score object"""
         return ScoreForm(winning_user_name=self.winning_user.get().name,
                          losing_user_name=self.losing_user.get().name,
                          date=str(self.date))
 
 
 class UserForm(messages.Message):
+    """UserForm for username and email information"""
     user_name = messages.StringField(1, required=True)
     email = messages.StringField(2, required=True)
-
-
-class TestForm(messages.Message):
-    user_one_name = messages.StringField(1, required=True)
 
 
 class GameForm(messages.Message):
@@ -417,6 +445,7 @@ class GameForm(messages.Message):
 
 
 class GameHistoryForm(messages.Message):
+    """GameHistoryForm for outbound game history information"""
     urlsafe_key = messages.StringField(1, required=True)
     user_one_name = messages.StringField(2, required=True)
     user_two_name = messages.StringField(3, required=True)
@@ -431,15 +460,10 @@ class NewGameForm(messages.Message):
 
 
 class PlayCardForm(messages.Message):
-    """Used to make a move in an existing game"""
+    """Used to play a card in an existing game"""
     card_number = messages.StringField(1, required=True)
     card_suit = messages.StringField(2, required=True)
     crazy_suit = messages.StringField(3)
-
-
-class DrawCardForm(messages.Message):
-    """Used to make a move in an existing game"""
-    draw_card = messages.BooleanField(1, required=True)
 
 
 class ScoreForm(messages.Message):
@@ -450,6 +474,7 @@ class ScoreForm(messages.Message):
 
 
 class UserRankingForm(messages.Message):
+    """UserRankingForm for outbound user ranking information"""
     user_name = messages.StringField(1, required=True)
     wins = messages.IntegerField(2, required=True)
     losses = messages.IntegerField(3, required=True)
@@ -463,11 +488,12 @@ class ScoreForms(messages.Message):
 
 
 class UserRankingForms(messages.Message):
+    """Return multiple UserRankingForms"""
     items = messages.MessageField(UserRankingForm, 1, repeated=True)
 
 
 class GameForms(messages.Message):
-    """Return multiple ScoreForms"""
+    """Return multiple GameForms"""
     items = messages.MessageField(GameForm, 1, repeated=True)
 
 
