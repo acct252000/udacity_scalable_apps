@@ -2,7 +2,7 @@
 
 ##Set-Up Instructions:
 
-APIs can be accessed at (https://udacity-scalable-game.appspot.com/_ah/api/explorer)[https://udacity-scalable-game.appspot.com/_ah/api/explorer]
+APIs can be accessed at [https://udacity-scalable-game.appspot.com/_ah/api/explorer[(https://udacity-scalable-game.appspot.com/_ah/api/explorer)
 
 ##Game Description:
 
@@ -23,13 +23,13 @@ page.  View user scores on the Scores page and update profile information on the
 Known issue - Google App Engine is extremely slow; 
 
 ##Files Included:
-api.py: Contains endpoints and game playing logic.
-app.yaml: App configuration.
-cron.yaml: Cronjob configuration.
-main.py: Handler for taskqueue handler.
-models.py: Entity and message definitions including helper methods.
-utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
-static and template files for web interface
+- api.py: Contains endpoints and game playing logic.
+- app.yaml: App configuration.
+- cron.yaml: Cronjob configuration.
+- main.py: Handler for taskqueue handler.
+- models.py: Entity and message definitions including helper methods.
+- utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
+- static and template files for web interface
 
 note settings.py not included as holds sensitive information
 
@@ -134,30 +134,30 @@ When the last card is played, ends game and reports winner.
 - Stores unique user_name and email address.
 
 - **Game**
--Stores unique game states. Associated with User model via KeyProperty.
+- Stores unique game states. Associated with User model via KeyProperty.
 - Attributes:
   -      player_one_hand: text property holding comma sepearated 
                           cardnumbers (0-51) of hand
-   -     player_two_hand: text property holding comma separated
+  -      player_two_hand: text property holding comma separated
                           cardnumbers (0-51) of hand
-    -    discard_pile: text property holding comma separated
+  -      discard_pile: text property holding comma separated
                       cardnumbers(0-51) of discarded cards
-     -   undrawn_cards: text property holding comma separated
+  -      undrawn_cards: text property holding comma separated
                        cardnumbers(0-51) of discarded cards
-    -    current_suit: text property holding lower case current suit of game
-     -   game_over: boolean property indicating if game is over
-    -    user_one: key property referencing User class
-    -    user_two: key property referencing User class
-    -    user_one_turn: boolean property indicating if user one turn
-    -    cancelled: boolean property indicating if game is cancelled
-    -    move: repeated field holding string tracking game history in format
+  -      current_suit: text property holding lower case current suit of game
+  -      game_over: boolean property indicating if game is over
+  -      user_one: key property referencing User class
+  -      user_two: key property referencing User class
+  -      user_one_turn: boolean property indicating if user one turn
+  -      cancelled: boolean property indicating if game is cancelled
+  -      move: repeated field holding string tracking game history in format
               user, action, card suit, card number
-     -   date: date property holding date created
-      -  computer_card: string property used for computer games, the string
+  -      date: date property holding date created
+  -      computer_card: string property used for computer games, the string
                        number of the card selected by the computer to play
-      -  computer_crazy_suit: string property used for computer games, the 
+  -      computer_crazy_suit: string property used for computer games, the 
                              suit the computer has selected when playing an 8
-       - game_message: string message used for messages from computer play
+  -      game_message: string message used for messages from computer play
 
 - **Score**
 - Records winning user, losing user, and date. Associated with Users model via KeyProperty.
@@ -168,14 +168,14 @@ When the last card is played, ends game and reports winner.
 - Holds user_name and email.
 
 - **GameForm**
--Representation of a Game's state.  Includes fields from Game model, except for move field which tracks history, computer_card, computer_crazy_suit, and game_message fields used to play vs computer, along with a text message field for game messages.
+- Representation of a Game's state.  Includes fields from Game model, except for move field which tracks history, computer_card, computer_crazy_suit, and game_message fields used to play vs computer, along with a text message field for game messages.
 User one and user two fields in Game model are representd by user_one_name and user_two_name in form.  Also holds urlsafe_key.
 
 - **GameForms**
 - Multiple GameForm container
 
 - **GameHistoryForm**
--Representation of a Game's history.  Holds game's urlsafe_key, user_one_name, user_two_name, date, and move fields.
+- Representation of a Game's history.  Holds game's urlsafe_key, user_one_name, user_two_name, date, and move fields.
 
 - **NewGameForm**
 - Used to create a new game (user_one_name, user_two_name)
@@ -187,7 +187,7 @@ User one and user two fields in Game model are representd by user_one_name and u
 - Representation of a completed game's score, defined as winner_user_name, losing_user_name, and date.
 
 - **ScoreForms**
-Multiple ScoreForm container.
+- Multiple ScoreForm container.
 
 - **UserRankingForm**
 - Representation of current user rankings by user_name, wins, losses, games, winning_- percentage
