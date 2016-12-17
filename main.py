@@ -13,7 +13,7 @@ class SendReminderEmail(webapp2.RequestHandler):
         """Send a reminder email to each User with an email about games.
         Called every hour using a cron job"""
         app_id = app_identity.get_application_id()
-        games = Game.query(Game.game_over == false)
+        games = Game.query(Game.game_over == False)
         users = User.query()
 
         user_keys = []

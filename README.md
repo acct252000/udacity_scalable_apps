@@ -22,6 +22,9 @@ page.  View user scores on the Scores page and update profile information on the
 
 Known issue - Google App Engine is extremely slow; 
 
+##Score Keeping
+Scores are tracked by storing winning user, losing user, and date.  Users are ranked by winning percentage (games won/total games played.)  
+
 ##Files Included:
 - api.py: Contains endpoints and game playing logic.
 - app.yaml: App configuration.
