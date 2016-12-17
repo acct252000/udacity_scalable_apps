@@ -6,8 +6,8 @@ APIs can be accessed at [https://udacity-scalable-game.appspot.com/_ah/api/explo
 
 ##Game Description:
 
-Crazy Eights is a card game.  This implementation is for two players, or one player vs. the computer.  In order to create a game played vs. the computer, enter "Computer" as
-the user two name when creating a new game.
+Crazy Eights is a card game.  This implementation is for two players, or one player vs. the computer, or, alternatively, one player vs. himself if so desired.  In order to create a game played vs. the computer, enter "Computer" as
+the user two name when creating a new game.  If this is a new implementation, the user "Computer" will have to be created either through the Datastore or the create_user API.
 
 Each player is dealt seven cards, and one card is discarded.  Player one has the first turn, and must discard a card that matches either the top discarded card's suit or number.
 Eights are "crazy", and can be played at any time to change the suit to the desired suit of the player playing the card.  If the player does not have a match, he must
