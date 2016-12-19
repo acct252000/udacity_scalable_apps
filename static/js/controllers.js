@@ -232,6 +232,7 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
      * Holds the status if the query is being executed.
      * @type {boolean}
      */
+    $scope.loading = false;
     $scope.submitted = false;
     $scope.current_user = current_user_name.name;
 
