@@ -473,7 +473,7 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
                         });
                         $scope.discard_pile = resp.result.discard_pile.split('*');
                         $scope.discard_pile_top_card = $scope.getCardFromString($scope.discard_pile[0]);
-                        if (resp.result.user_one_name == current_user_name.name) {
+                        if (resp.result.user_one_name == current_user_name.name || resp.result.user_two_name == "Computer") {
                             $scope.is_user_one = true;
                         }
                         $scope.checkUserTurn();
