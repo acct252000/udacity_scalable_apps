@@ -24,16 +24,20 @@
         <div ng-show = "show_suit" class="col-lg-12">
             <h4>Current suit is {{game.current_suit}}</h4>
         </div>
+        <div ng-if="!game.game_over">
          <div ng-show = "is_player_turn" class="col-lg-12">
-            <h4>It is your turn</h4>
+            <h4>It is your turn.  Opposing player has {{other_card_count}} cards.</h4>
         </div>
          <div ng-hide = "is_player_turn" class="col-lg-12">
-            <h4 ng-show="is_user_one">It is {{game.user_two_name}}'s turn.</h4>
-            <h4 ng-hide="is_user_one">It is {{game.user_one_name}}'s turn.</h4>
+            <h4 ng-show="is_user_one">It is {{game.user_two_name}}'s turn.  Opposing player has {{other_card_count}} cards.</h4>
+            <h4 ng-hide="is_user_one">It is {{game.user_one_name}}'s turn.  Opposing player has {{other_card_count}} cards.</h4>
+        </div>
         </div>
         <div ng-show = "game_over" class="col-lg-12">
             <h4>{{game.message}}</h4>
+            <div ng-show="!game.message">Game is Over!</div>
         </div>
+        
       
         <div ng-show="eight_played">
         <form name="crazyForm" novalidate role="form">
@@ -50,11 +54,11 @@
                 </button>
             </form>
         </div>
-        <div class="row">
-        <section ng-if="is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_one_hand_cards"><h4>Player One</h4>
+        <div class="row" ng-if="!game.game_over">
+        <section ng-if="is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_one_hand_cards">
             <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
         </section>
-         <section ng-if="!is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards"><h4>Player Two </h4>
+         <section ng-if="!is_user_one" class="col-md-2 col-sm-3 col-xs-3 col-lg-1 text-center" ng-repeat="card in player_two_hand_cards">
             <a href="" ng-click="takeTurn(card.card_suit, card.card_number, card.card_suit)"><img class = "card" ng-src="/img/{{card.img}}"  alt="Card is {{card.card_number}} of {{card.card_suit}}"></a>
         </section>
          

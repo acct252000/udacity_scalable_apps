@@ -253,7 +253,7 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
     $scope.eight_suit = 'hearts';
     $scope.show_suit = false;
     $scope.game_over = false;
-
+    $scope.other_card_count = 0;
     /**
      * Resets user hands after a play
      */
@@ -353,6 +353,12 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
                     }
                     $scope.game_over = resp.result.game_over;
                     $scope.checkUserTurn();
+                    if ($scope.is_user_one)
+                    {
+                        $scope.other_card_count = $scope.player_two_hand.length;
+                    } else {
+                        $scope.other_card_count = $scope.player_one_hand.length;
+                    }
                     $scope.loading = false;
 
                 }
@@ -378,7 +384,7 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
         }
     };
 
-
+    
     /**
      * Allows for form submittal to play crazy eight suit if eight is played
      */
@@ -428,6 +434,12 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
                         $scope.discard_pile = resp.result.discard_pile.split('*');
                         $scope.discard_pile_top_card = $scope.getCardFromString($scope.discard_pile[0]);
                         $scope.checkUserTurn();
+                        if ($scope.is_user_one)
+                        {
+                        $scope.other_card_count = $scope.player_two_hand.length;
+                        } else {
+                        $scope.other_card_count = $scope.player_one_hand.length;
+                        }
                         $scope.loading = false;
 
                     }
@@ -463,6 +475,7 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
                     } else {
                         // The request has succeeded.
                         $scope.game = resp.result;
+                        $scope.game_over = resp.result.game_over;
                         $scope.player_one_hand = resp.result.player_one_hand.split('*');
                         $scope.player_one_hand.forEach(function(card) {
                             $scope.player_one_hand_cards.push($scope.getCardFromString(card));
@@ -477,6 +490,12 @@ crazyeightsApp.controllers.controller('PlayGameCtrl', function($scope, $log, $ro
                             $scope.is_user_one = true;
                         }
                         $scope.checkUserTurn();
+                        if ($scope.is_user_one)
+                        {
+                        $scope.other_card_count = $scope.player_two_hand.length;
+                        } else {
+                        $scope.other_card_count = $scope.player_one_hand.length;
+                        }
                         $scope.loading = false;
 
                     }

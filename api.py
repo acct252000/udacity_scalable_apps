@@ -159,7 +159,9 @@ class CrazyEightsApi(remote.Service):
         """Return the current game state."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
-            if game.user_one_turn:
+            if game.game_over:
+                game_message = ('Game is over!')
+            elif game.user_one_turn:
                 game_message = ('Time for ' + game.user_one.get().name +
                                 ' to make a move!')
             else:
