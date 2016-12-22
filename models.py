@@ -273,6 +273,7 @@ class Game(ndb.Model):
         second_suit = first_suit
         third_suit = first_suit
         fourth_suit = first_suit
+        selected_card = ('none', 'none')
         if len(suits) > 1:
             second_suit = suits[1][0]
         if len(suits) > 2:
