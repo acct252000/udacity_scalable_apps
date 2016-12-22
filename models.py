@@ -225,12 +225,14 @@ class Game(ndb.Model):
         # add card to player hand
         if user_one_turn is True:
             player_hand_list = self.player_one_hand.split(',')
-            player_hand_list.append(drawn_card)
+            #player_hand_list.append(drawn_card)
+            player_hand_list.insert(0,drawn_card)
             self.player_one_hand = ','.join(player_hand_list)
             user_name = self.user_one.get().name
         else:
             player_hand_list = self.player_two_hand.split(',')
-            player_hand_list.append(drawn_card)
+            #player_hand_list.append(drawn_card)
+            player_hand_list.insert(0,drawn_card)
             self.player_two_hand = ','.join(player_hand_list)
             user_name = self.user_two.get().name
         # reshuffle cards
